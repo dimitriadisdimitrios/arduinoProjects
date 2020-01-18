@@ -1,36 +1,122 @@
+//Vars necessary to control the speed of the motor via the ESC.
+const int pin_out_bw = 38;
+const int pin_out_fw = 39;
+const int pin_out_lf = 40;
+const int pin_out_rg = 41;
+/* 38     -goes front
+   38+39  -goes back
+   none   -neutral
+   40     -left
+   41     -right   
+*/
 
-int speedRead;          //Vars necessary to control the speed of the motor via the ESC.
-int speedRemap;
-int forwardSpeed = 2000;
-int reverseSpeed;
-int speedCenter = 1500;
-const int frontThreshold = 66;    //Thresholds for the different 'types' of sonar sensors -- front, front side, and side. These can be changed and are set in centimeters.
-const int frontSideThreshold = 45;
-const int sideThreshold = 10;
 
-const int mainDelay = 1500;
-const bool asd = false;
-const int pin_out = 6;
+const int nDelay = 1500; //milisec
 
-/*START -- MAIN PROJECT */
 void setup() {
   //Declaring LED pin as output
-  pinMode(pin_out, OUTPUT);
+  pinMode(pin_out_bw, OUTPUT);
+  pinMode(pin_out_fw, OUTPUT);
+  pinMode(pin_out_lf, OUTPUT);
+  pinMode(pin_out_rg, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 }
 void loop() {
-  backwardStart();
-  backwardStop();
+  goBackward(nDelay);
+  goNone(nDelay);
+  goForward(nDelay);
+  goNone(nDelay);
+  goLeftFw(nDelay);
+  goNone(nDelay);
+  goLeftBw(nDelay);
+  goNone(nDelay);
 }
-/*END -- MAIN PROJECT */
 
-void backwardStart() {
-  digitalWrite(LED_BUILTIN, HIGH);
-  analogWrite(pin_out, 250);
-  delay(mainDelay);
+
+/*/////////////////////////////////////////*/
+void setOnRelayForBw() {
+  // digitalWrite(LED_BUILTIN, HIGH);
+  analogWrite(pin_out_bw, 255);
 }
-void backwardStop() {
+void setOffRelayForBw() {
+  // digitalWrite(LED_BUILTIN, LOW);
+  analogWrite(pin_out_bw, 0);
+}
+void setOnRelayForFw() {
+  analogWrite(pin_out_fw, 255);
+}
+void setOffRelayForFw() {
+  analogWrite(pin_out_fw, 0);
+}
+void setOnRelayForLf() {
+  analogWrite(pin_out_lf, 255);
+}
+void setOffRelayForLF() {
+  analogWrite(pin_out_lf, 0);
+}
+void setOnRelayForRg() {
+  analogWrite(pin_out_rg, 255);
+}
+void setOffRelayForRg() {
+  analogWrite(pin_out_rg, 0);
+}
+
+void setOnMainLed(){
+  digitalWrite(LED_BUILTIN, HIGH);
+}
+void setOffMainLed(){
   digitalWrite(LED_BUILTIN, LOW);
-  analogWrite(pin_out, 0);
-  delay(mainDelay);
+}
+void resetOutput(){
+  analogWrite(pin_out_fw, 0);
+  analogWrite(pin_out_bw, 0);
+  analogWrite(pin_out_lf, 0);
+  analogWrite(pin_out_rg, 0);
+}
+/*/////////////////////////////////////////*/
+
+void goForward(int mDelay){
+  resetOutput(); //38
+  setOnRelayForFw();
+  delay(mDelay);
+} 
+void goBackward(int mDelay){
+  resetOutput();
+  setOnRelayForFw(); //38
+  setOnRelayForBw(); //39 == 38+39
+  delay(mDelay);
+}
+
+void goLeftFw(int mDelay){
+  resetOutput();
+  setOnRelayForFw(); //38
+  setOnRelayForLf(); //40 == 38+40 
+  delay(mDelay);
+} 
+void goLeftBw(int mDelay){
+  resetOutput();
+  setOnRelayForFw(); //38
+  setOnRelayForBw(); //39
+  setOnRelayForLf(); //40 == 38+39+40
+  delay(mDelay);
+}
+void goRightFw(int mDelay){
+  resetOutput();
+  setOnRelayForFw(); //38
+  setOnRelayForBw(); //41 == 38+41
+  delay(mDelay);
+}
+void goRightBw(int mDelay){
+  resetOutput();
+  setOnRelayForFw(); //38
+  setOnRelayForBw(); //39
+  setOnRelayForRg(); //41 == 38+39+41
+  delay(mDelay);
+}
+void goNone(int mDelay){
+  resetOutput();
+  
+  setOnMainLed();
+  delay(mDelay);
+  setOffMainLed();
 }
