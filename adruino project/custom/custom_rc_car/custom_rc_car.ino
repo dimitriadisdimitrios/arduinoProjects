@@ -15,9 +15,9 @@ const int echoLeft = 9;
 const int trigRight = 10;
 const int echoRight = 11;
 
-const int nDelay = 500;               //milisec
-const int nDelayForLed = 2000;               //milisec
-const int delToNeutralSensor = 2;      //microsec - To reset the signal from sensor
+const int nDelay = 4000; //sec
+const int nDelayForLed = 10000; //sec
+const int delToNeutralSensor = 2; //microsec - To reset the signal from sensor
 const int delToWaitRespondSensor = 10; //microsec
 int distance;
 const int distanceForFrontTrig = 50; //cm
@@ -46,17 +46,11 @@ void setup()
   pinMode(echoRight, INPUT);
 
   Serial.begin(9600); // Starts the serial communication
-  mainInitAndDelay(nDelay);
+  mainInitAndDelay();
 }
 void loop()
 {
-  testSensorts(trigLeft);
-  testSensorts(trigRight);
-  testSensorts(trigFront);
-  testSensorts(trigFrontLeft);
-  testSensorts(trigFrontRight);
-
-  // mainFunctionOfSensorsOfDrone();
+   mainFunctionOfSensorsOfDrone();
 }
 
 /*/////////////////////////////////////////*//*Read sensor*/
@@ -91,10 +85,13 @@ long readSensorDistance(int mTriger)
   // Reads the echoPin, returns the sound wave travel time in microseconds
   duration = pulseIn(tempEcho, HIGH);
   // Calculating the distance
-  distance = duration * fixedValToGiveDistance;
+  distance = duration *  0.034 / 2;
   // Prints the distance on the Serial Monitor
   Serial.print("Distance: ");
   Serial.println(distance);
+  Serial.print("Triger: ");
+  Serial.println(mTriger);
+  Serial.print("__________");
   return distance;
 }
 void testSensorts(int mTriger)
@@ -130,14 +127,11 @@ void testSensorts(int mTriger)
   // Calculating the distance
   long distance = duration * 0.034 / 2;
   // Prints the distance on the Serial Monitor
-  if(distance < 200){
-    Serial.print('\n');
-    Serial.print("mTriger    ");
-    Serial.print(mTriger);
-    Serial.print(" distance  ");
-    Serial.print(distance);
-  }
-  // Serial.println(distance);
+  Serial.print("Distance: ");
+  Serial.println(distance);
+  Serial.print("Triger: ");
+  Serial.println(mTriger);
+  Serial.print("__________");
 }
 
 void mainFunctionOfSensorsOfDrone()
@@ -145,21 +139,19 @@ void mainFunctionOfSensorsOfDrone()
   if(readSensorDistance(trigFront) < distanceForFrontTrig){
     if(readSensorDistance(trigFrontLeft) > readSensorDistance(trigFrontRight)){
       if(readSensorDistance(trigLeft) > distanceForRightLeftTrig){
-        goLeftFw(nDelay);
+        goLeftFw();
       }else{
-        mainInitAndDelay(nDelayForLed);
-        goBackward(nDelay);
+        goBackward();
       }
     }else{
       if(readSensorDistance(trigRight) > distanceForRightLeftTrig){
-        goRightFw(nDelay);
+        goRightFw();
       }else{
-        mainInitAndDelay(nDelayForLed);
-        goBackward(nDelay);
+        goBackward();
       }
     }
   }else{
-    goForward(nDelay);
+    goForward();
   }
 }
 
@@ -216,7 +208,7 @@ void resetOutput()
   analogWrite(pin_out_rg1, 255);
   analogWrite(pin_out_rg2, 255);
 }
-void mainInitAndDelay(int mDelay)
+void mainInitAndDelay()
 {
   for (int i = 1; i <= 10; i++)
   {
@@ -226,75 +218,93 @@ void mainInitAndDelay(int mDelay)
     delay((nDelay / i) / 2);
   }
 }
-
+void msgForMovement(const String& msg){
+  Serial.print("Movement Act: ");
+  Serial.println(msg);
+  Serial.print("__________");
+  Serial.print("");
+}
+void showMsgOnSerial(){
+  Serial.print("Movement Act: ");
+  Serial.println("Forward");
+  Serial.print("__________");
+  Serial.print("");
+}
 /*/////////////////////////////////////////*//*Moving of RC*/
-void goForward(int mDelay)
+void goForward()
 {
   resetOutput(); //38
   setOnRelayForFw();
-  delay(mDelay);
+  delay(nDelay);
+  msgForMovement("Forward");
 }
-void goBackward(int mDelay)
+void goBackward()
 {
   resetOutput();
   setOnRelayForFw(); //38
   setOnRelayForBw(); //39 == 38+39
-  delay(mDelay);
+  delay(nDelay);
+  msgForMovement("Backward");
 }
 
-void goLeftFw(int mDelay)
+void goLeftFw()
 {
   resetOutput();
   setOnRelayForFw(); //38
   setOnRelayForLf(); //40 == 38+40
-  delay(mDelay);
+  delay(nDelay);
+  msgForMovement("Left Forward");
 }
-void goLeftBw(int mDelay)
+void goLeftBw()
 {
   resetOutput();
   setOnRelayForFw(); //38
   setOnRelayForBw(); //39
   setOnRelayForLf(); //40 == 38+39+40
-  delay(mDelay);
+  delay(nDelay);
+  msgForMovement("Left Backward");
 }
-void goRightFw(int mDelay)
+void goRightFw()
 {
   resetOutput();
   setOnRelayForFw(); //38
   setOnRelayForRg();
-  delay(mDelay);
+  delay(nDelay);
+  msgForMovement("Right Forward");
 }
-void goRightBw(int mDelay)
+void goRightBw()
 {
   resetOutput();
   setOnRelayForFw(); //38
   setOnRelayForBw(); //39
   setOnRelayForRg(); //41+42 == 38+39+41+42
-  delay(mDelay);
+  delay(nDelay);
+  msgForMovement("Rigth Backward");
 }
-void goNone(int mDelay)
+void goNone()
 {
   resetOutput();
 
   setOnMainLed();
-  delay(mDelay);
+  delay(nDelay);
   setOffMainLed();
+  msgForMovement("No movement");
 }
 
 /*/////////////////////////////////////////*//*For Testing mobility of car*/
 void mainfunctionOfRC()
 {
   resetOutput();
-  goForward(nDelay);
-  goNone(nDelay);
-  goBackward(nDelay);
-  goNone(nDelay);
-  goLeftFw(nDelay);
-  goNone(nDelay);
-  goLeftBw(nDelay);
-  goNone(nDelay);
-  goRightFw(nDelay);
-  goNone(nDelay);
-  goRightBw(nDelay);
-  goNone(nDelay);
+  goForward();
+  goNone();
+  goBackward();
+  goNone();
+  goLeftFw();
+  goNone();
+  goLeftBw();
+  goNone();
+  goRightFw();
+  goNone();
+  goRightBw();
+  goNone();
 }
