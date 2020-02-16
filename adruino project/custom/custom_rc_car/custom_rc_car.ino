@@ -20,10 +20,10 @@ const int nDelayForLed = 10000; //sec
 const int delToNeutralSensor = 2; //microsec - To reset the signal from sensor
 const int delToWaitRespondSensor = 10; //microsec
 int distance;
-const int distanceForFrontTrig = 50; //cm
-const int distanceForRightLeftTrig = 25; //cm
-const int distanceStandarForSideLeftRight = 30; //cm
+const int distanceForFrontTrig = 25;//50; //cm
+const int distanceForRightLeftTrig =  10;//25; //cm
 long duration;
+bool lastMoveWasBack;
 const long fixedValToGiveDistance = 0.034 / 2; //Need to multiplied with duration to find distance
 
 void setup()
@@ -44,7 +44,7 @@ void setup()
   pinMode(echoLeft, INPUT);
   pinMode(trigRight, OUTPUT);
   pinMode(echoRight, INPUT);
-
+  lastMoveWasBack = false;
   Serial.begin(9600); // Starts the serial communication
   mainInitAndDelay();
 }
@@ -91,7 +91,7 @@ long readSensorDistance(int mTriger)
   Serial.println(distance);
   Serial.print("Triger: ");
   Serial.println(mTriger);
-  Serial.print("__________");
+  Serial.println("__________");
   return distance;
 }
 void testSensorts(int mTriger)
@@ -131,27 +131,51 @@ void testSensorts(int mTriger)
   Serial.println(distance);
   Serial.print("Triger: ");
   Serial.println(mTriger);
-  Serial.print("__________");
+  Serial.println("__________");
 }
 
 void mainFunctionOfSensorsOfDrone()
-{
-  if(readSensorDistance(trigFront) < distanceForFrontTrig){
+{ 
+  if(!lastMoveWasBack && readSensorDistance(trigFront) < distanceForFrontTrig) //last move was Backward? AND
+  {
+    algthmForDecision();
+  }
+  else
+  {
+    goForward();
+  }
+}
+
+//Main Algorthm of project
+void algthmForDecision(){
+  if(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrig || readSensorDistance(trigFrontRight) > distanceForRightLeftTrig)// Is FL or FR > 30cm (distanceForRightLeftTrig)
+  {
     if(readSensorDistance(trigFrontLeft) > readSensorDistance(trigFrontRight)){
       if(readSensorDistance(trigLeft) > distanceForRightLeftTrig){
         goLeftFw();
+        lastMoveWasBack = false;
       }else{
         goBackward();
-      }
-    }else{
-      if(readSensorDistance(trigRight) > distanceForRightLeftTrig){
-        goRightFw();
-      }else{
-        goBackward();
+        lastMoveWasBack = true;
       }
     }
-  }else{
-    goForward();
+    else
+    {
+      if(readSensorDistance(trigRight) > distanceForRightLeftTrig){
+        goRightFw();
+        lastMoveWasBack = false;
+      }
+      else
+      {
+        goBackward();
+        lastMoveWasBack = true;
+      }
+    }
+  }
+  else
+  {
+    goBackward();
+    lastMoveWasBack = true;
   }
 }
 
@@ -216,19 +240,12 @@ void mainInitAndDelay()
     delay((nDelay / i) / 2);
     setOffMainLed();
     delay((nDelay / i) / 2);
-  }
+  } 
 }
 void msgForMovement(const String& msg){
   Serial.print("Movement Act: ");
   Serial.println(msg);
-  Serial.print("__________");
-  Serial.print("");
-}
-void showMsgOnSerial(){
-  Serial.print("Movement Act: ");
-  Serial.println("Forward");
-  Serial.print("__________");
-  Serial.print("");
+  Serial.println("__________");
 }
 /*/////////////////////////////////////////*//*Moving of RC*/
 void goForward()
