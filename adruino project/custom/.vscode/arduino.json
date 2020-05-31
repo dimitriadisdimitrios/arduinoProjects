@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:mega",
+    "configuration": "cpu=atmega2560",
+    "sketch": "custom_rc_car\\custom_rc_car.ino",
+    "port": "COM7"
+}
