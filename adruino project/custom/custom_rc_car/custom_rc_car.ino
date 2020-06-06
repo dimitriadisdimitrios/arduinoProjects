@@ -1,4 +1,4 @@
-const int pin_out_bw = 49;
+const int pin_out_bw = 50;
 const int pin_out_fw = 52;
 const int pin_out_lf = 48;
 const int pin_out_rg = 46;
@@ -19,8 +19,12 @@ const int nDelayForLed = 10000;        //sec
 const int delToNeutralSensor = 2;      //microsec - To reset the signal from sensor
 const int delToWaitRespondSensor = 10; //microsec
 int distance;
-const int distanceForFrontTrig = 25;     //50; //cm
-const int distanceForRightLeftTrig = 10; //25; //cm
+const int distanceForFrontTrigSafeCall = 50;     //50; //cm
+const int distanceForRightLeftTrigSafeCall = 20; //25; //cm
+const int distanceForFrontTrig = 25;             //50; //cm
+const int distanceForRightLeftTrig = 10;         //25; //cm
+const int distanceForFrontTrigCloseCall = 12;    //25; //cm
+const int distanceForRightLeftTrigCloseCall = 5; //12; //cm
 long duration;
 bool lastMoveWasBack;
 const long fixedValToGiveDistance = 0.034 / 2; //Need to multiplied with duration to find distance
@@ -48,8 +52,9 @@ void setup()
 }
 void loop()
 {
-  mainfunctionOfRC();
+  // mainfunctionOfRC();
   // algthmForDecision();
+  algorithmForDecision2();
 }
 
 /*/////////////////////////////////////////*/ /*Read sensor*/
@@ -93,6 +98,7 @@ long readSensorDistance(int mTriger)
   Serial.println("__________");
   return distance;
 }
+
 void testSensorts(int mTriger)
 {
   int tempEcho;
@@ -136,6 +142,7 @@ void testSensorts(int mTriger)
 //Main Algorthm of project
 void algthmForDecision()
 {
+
   if (lastMoveWasBack || readSensorDistance(trigFront) < distanceForFrontTrig) //last move was Backward? AND
   {
     if (readSensorDistance(trigFrontLeft) > distanceForRightLeftTrig || readSensorDistance(trigFrontRight) > distanceForRightLeftTrig) // Is FL or FR > 30cm (distanceForRightLeftTrig)
@@ -176,6 +183,47 @@ void algthmForDecision()
   else
   {
     goForward();
+  }
+}
+
+void algorithmForDecision2(){
+  while(readSensorDistance(trigFront) < distanceForFrontTrig && readSensorDistance(trigFrontLeft) < distanceForRightLeftTrig && readSensorDistance(trigFrontRight) < distanceForRightLeftTrig){
+    goForward();
+  }
+
+  if(readSensorDistance(trigFront) < distanceForFrontTrig){
+    do{
+      if(readSensorDistance(trigFrontLeft) < readSensorDistance(trigFrontRight)){
+        goRightFw();
+      } else {
+        goLeftFw();
+      }
+    } while(readSensorDistance(trigFront) > distanceForFrontTrigSafeCall);
+
+  } else if(readSensorDistance(trigFrontLeft) < distanceForRightLeftTrig){
+    if(readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall){
+      do{
+        goRightFw();
+      }while(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigSafeCall);
+
+    }else{
+      do{
+        goLeftBw();
+      }while(readSensorDistance(trigFront) > distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall);
+    }
+
+  } else {
+    if(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall){
+      do{
+        goLeftFw();
+      }while(readSensorDistance(trigFrontRight) > distanceForRightLeftTrigSafeCall);
+
+    }else{
+      do{
+        goRightBw();
+      }while(readSensorDistance(trigFront) > distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall);
+    }
+
   }
 }
 
@@ -233,7 +281,7 @@ void mainInitAndDelay()
 {
   for (int i = 1; i <= 10; i++)
   {
-    Serial.println(10-i);
+    Serial.println(10 - i);
     setOnMainLed();
     delay((nDelay / i) / 2);
     setOffMainLed();
@@ -257,7 +305,6 @@ void goForward()
 void goBackward()
 {
   resetOutput();
-  setOnRelayForFw();
   setOnRelayForBw();
   delay(nDelay);
   msgForMovement("Backward");
@@ -274,7 +321,6 @@ void goLeftFw()
 void goLeftBw()
 {
   resetOutput();
-  setOnRelayForFw();
   setOnRelayForBw();
   setOnRelayForLf();
   delay(nDelay);
@@ -291,9 +337,8 @@ void goRightFw()
 void goRightBw()
 {
   resetOutput();
-  setOnRelayForFw(); 
-  setOnRelayForBw(); 
-  setOnRelayForRg(); 
+  setOnRelayForBw();
+  setOnRelayForRg();
   delay(nDelay);
   msgForMovement("Rigth Backward");
 }
