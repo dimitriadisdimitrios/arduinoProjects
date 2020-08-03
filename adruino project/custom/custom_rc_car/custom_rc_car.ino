@@ -55,6 +55,9 @@ void loop()
   // mainfunctionOfRC();
   // algthmForDecision();
   algorithmForDecision2();
+//  for(int j = 2; j < 11; j = j+2){
+//    testSensorts(j);
+//  } 
 }
 
 /*/////////////////////////////////////////*/ /*Read sensor*/
@@ -187,41 +190,52 @@ void algthmForDecision()
 }
 
 void algorithmForDecision2(){
-  while(readSensorDistance(trigFront) < distanceForFrontTrig && readSensorDistance(trigFrontLeft) < distanceForRightLeftTrig && readSensorDistance(trigFrontRight) < distanceForRightLeftTrig){
-    goForward();
+  while(readSensorDistance(trigFront) > distanceForFrontTrig && readSensorDistance(trigFrontLeft) > distanceForRightLeftTrig && readSensorDistance(trigFrontRight) > distanceForRightLeftTrig){
+   goForward();
+    Serial.println("&&0   !!!!");
   }
 
   if(readSensorDistance(trigFront) < distanceForFrontTrig){
     do{
       if(readSensorDistance(trigFrontLeft) < readSensorDistance(trigFrontRight)){
-        goRightFw();
+       goRightFw();
       } else {
-        goLeftFw();
+       goLeftFw();
       }
-    } while(readSensorDistance(trigFront) > distanceForFrontTrigSafeCall);
+        Serial.print("&&1   ");
+        Serial.println(readSensorDistance(trigFrontLeft) < readSensorDistance(trigFrontRight));
+    } while(readSensorDistance(trigFront) < distanceForFrontTrigSafeCall);
 
   } else if(readSensorDistance(trigFrontLeft) < distanceForRightLeftTrig){
     if(readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall){
       do{
-        goRightFw();
-      }while(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigSafeCall);
+       goRightFw();
+        Serial.print("&&2   ");
+        Serial.println(readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall);
+      }while(readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigSafeCall);
 
     }else{
       do{
-        goLeftBw();
-      }while(readSensorDistance(trigFront) > distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall);
+       goLeftBw();
+        Serial.print("&&3   ");
+        Serial.println(readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall);
+      }while(readSensorDistance(trigFront) < distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) < distanceForRightLeftTrigCloseCall);
     }
 
   } else {
     if(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall){
       do{
-        goLeftFw();
-      }while(readSensorDistance(trigFrontRight) > distanceForRightLeftTrigSafeCall);
+       goLeftFw();
+        Serial.print("&&4   ");
+        Serial.println(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall);
+      }while(readSensorDistance(trigFrontRight) < distanceForRightLeftTrigSafeCall);
 
     }else{
       do{
-        goRightBw();
-      }while(readSensorDistance(trigFront) > distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall);
+       goRightBw();
+        Serial.print("&&5   ");
+        Serial.println(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall);
+      }while(readSensorDistance(trigFront) < distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) < distanceForRightLeftTrigCloseCall);
     }
 
   }
@@ -283,9 +297,9 @@ void mainInitAndDelay()
   {
     Serial.println(10 - i);
     setOnMainLed();
-    delay((nDelay / i) / 2);
+    delay((nDelay / i) / 4);
     setOffMainLed();
-    delay((nDelay / i) / 2);
+    delay((nDelay / i) / 4);
   }
 }
 void msgForMovement(const String &msg)
