@@ -29,6 +29,7 @@ long duration;
 bool lastMoveWasBack;
 const long fixedValToGiveDistance = 0.034 / 2; //Need to multiplied with duration to find distance
 
+//Main method it execute 1 time when arduino starts
 void setup()
 {
   pinMode(pin_out_bw, OUTPUT);
@@ -50,14 +51,31 @@ void setup()
   Serial.begin(9600); // Starts the serial communication
   mainInitAndDelay();
 }
+
+//Main method that execute in infinite loop
 void loop()
 {
   // mainfunctionOfRC();
+  
   // algthmForDecision();
-  algorithmForDecision2();
-//  for(int j = 2; j < 11; j = j+2){
-//    testSensorts(j);
-//  } 
+  
+  // algorithmForDecision2();
+  testMethod();
+  //  for(int j = 2; j < 11; j = j+2){
+  //    testSensorts(j);
+  //  }
+}
+
+//Test method was created only for testing purpose
+void testMethod() {
+
+  if(readSensorDistance(trigFront)>20){
+    goForward();
+  } else {
+    goNone();
+  }
+//goForward();
+  
 }
 
 /*/////////////////////////////////////////*/ /*Read sensor*/
@@ -189,55 +207,71 @@ void algthmForDecision()
   }
 }
 
-void algorithmForDecision2(){
-  while(readSensorDistance(trigFront) > distanceForFrontTrig && readSensorDistance(trigFrontLeft) > distanceForRightLeftTrig && readSensorDistance(trigFrontRight) > distanceForRightLeftTrig){
-   goForward();
+void algorithmForDecision2()
+{
+  while (readSensorDistance(trigFront) > distanceForFrontTrig && readSensorDistance(trigFrontLeft) > distanceForRightLeftTrig && readSensorDistance(trigFrontRight) > distanceForRightLeftTrig)
+  {
+    goForward();
     Serial.println("&&0   !!!!");
   }
 
-  if(readSensorDistance(trigFront) < distanceForFrontTrig){
-    do{
-      if(readSensorDistance(trigFrontLeft) < readSensorDistance(trigFrontRight)){
-       goRightFw();
-      } else {
-       goLeftFw();
+  if (readSensorDistance(trigFront) < distanceForFrontTrig)
+  {
+    do
+    {
+      if (readSensorDistance(trigFrontLeft) < readSensorDistance(trigFrontRight))
+      {
+        goRightFw();
       }
-        Serial.print("&&1   ");
-        Serial.println(readSensorDistance(trigFrontLeft) < readSensorDistance(trigFrontRight));
-    } while(readSensorDistance(trigFront) < distanceForFrontTrigSafeCall);
-
-  } else if(readSensorDistance(trigFrontLeft) < distanceForRightLeftTrig){
-    if(readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall){
-      do{
-       goRightFw();
+      else
+      {
+        goLeftFw();
+      }
+      Serial.print("&&1   ");
+      Serial.println(readSensorDistance(trigFrontLeft) < readSensorDistance(trigFrontRight));
+    } while (readSensorDistance(trigFront) < distanceForFrontTrigSafeCall);
+  }
+  else if (readSensorDistance(trigFrontLeft) < distanceForRightLeftTrig)
+  {
+    if (readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall)
+    {
+      do
+      {
+        goRightFw();
         Serial.print("&&2   ");
         Serial.println(readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall);
-      }while(readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigSafeCall);
-
-    }else{
-      do{
-       goLeftBw();
+      } while (readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigSafeCall);
+    }
+    else
+    {
+      do
+      {
+        goLeftBw();
         Serial.print("&&3   ");
         Serial.println(readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall);
-      }while(readSensorDistance(trigFront) < distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) < distanceForRightLeftTrigCloseCall);
+      } while (readSensorDistance(trigFront) < distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) < distanceForRightLeftTrigCloseCall);
     }
-
-  } else {
-    if(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall){
-      do{
-       goLeftFw();
+  }
+  else
+  {
+    if (readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall)
+    {
+      do
+      {
+        goLeftFw();
         Serial.print("&&4   ");
         Serial.println(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall);
-      }while(readSensorDistance(trigFrontRight) < distanceForRightLeftTrigSafeCall);
-
-    }else{
-      do{
-       goRightBw();
+      } while (readSensorDistance(trigFrontRight) < distanceForRightLeftTrigSafeCall);
+    }
+    else
+    {
+      do
+      {
+        goRightBw();
         Serial.print("&&5   ");
         Serial.println(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall);
-      }while(readSensorDistance(trigFront) < distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) < distanceForRightLeftTrigCloseCall);
+      } while (readSensorDistance(trigFront) < distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) < distanceForRightLeftTrigCloseCall);
     }
-
   }
 }
 
@@ -313,14 +347,14 @@ void goForward()
 {
   resetOutput(); //38
   setOnRelayForFw();
-  delay(nDelay);
+//  delay(nDelay);
   msgForMovement("Forward");
 }
 void goBackward()
 {
   resetOutput();
   setOnRelayForBw();
-  delay(nDelay);
+//  delay(nDelay);
   msgForMovement("Backward");
 }
 
@@ -329,7 +363,7 @@ void goLeftFw()
   resetOutput();
   setOnRelayForFw();
   setOnRelayForLf();
-  delay(nDelay);
+//  delay(nDelay);
   msgForMovement("Left Forward");
 }
 void goLeftBw()
@@ -337,7 +371,7 @@ void goLeftBw()
   resetOutput();
   setOnRelayForBw();
   setOnRelayForLf();
-  delay(nDelay);
+//  delay(nDelay);
   msgForMovement("Left Backward");
 }
 void goRightFw()
@@ -345,7 +379,7 @@ void goRightFw()
   resetOutput();
   setOnRelayForFw();
   setOnRelayForRg();
-  delay(nDelay);
+//  delay(nDelay);
   msgForMovement("Right Forward");
 }
 void goRightBw()
@@ -353,7 +387,7 @@ void goRightBw()
   resetOutput();
   setOnRelayForBw();
   setOnRelayForRg();
-  delay(nDelay);
+//  delay(nDelay);
   msgForMovement("Rigth Backward");
 }
 void goNone()
@@ -361,7 +395,7 @@ void goNone()
   resetOutput();
 
   setOnMainLed();
-  delay(nDelay);
+//  delay(nDelay);
   setOffMainLed();
   msgForMovement("No movement");
 }
