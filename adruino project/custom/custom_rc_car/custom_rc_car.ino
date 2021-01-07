@@ -19,14 +19,13 @@ const int nDelayForLed = 10000;        //sec
 const int delToNeutralSensor = 2;      //microsec - To reset the signal from sensor
 const int delToWaitRespondSensor = 10; //microsec
 int distance;
-const int distanceForFrontTrigSafeCall = 50;     //50; //cm
-const int distanceForRightLeftTrigSafeCall = 20; //25; //cm
-const int distanceForFrontTrig = 25;             //50; //cm
-const int distanceForRightLeftTrig = 10;         //25; //cm
-const int distanceForFrontTrigCloseCall = 12;    //25; //cm
-const int distanceForRightLeftTrigCloseCall = 5; //12; //cm
+bool trigToMakeManeuver;      //Triger for brainlessDrive to excecute the second part of algorythm
+const int distanceTrigC = 50; //50 cm
+const int distanceTrigA = 30; //30 cm
+const int distanceTrigB = 15; //15 cm
+
 long duration;
-bool lastMoveWasBack;
+
 const long fixedValToGiveDistance = 0.034 / 2; //Need to multiplied with duration to find distance
 
 //Main method it execute 1 time when arduino starts
@@ -47,7 +46,6 @@ void setup()
   pinMode(echoLeft, INPUT);
   pinMode(trigRight, OUTPUT);
   pinMode(echoRight, INPUT);
-  lastMoveWasBack = false;
   Serial.begin(9600); // Starts the serial communication
   mainInitAndDelay();
 }
@@ -56,29 +54,73 @@ void setup()
 void loop()
 {
   // mainfunctionOfRC();
-  
-  // algthmForDecision();
-  
-  // algorithmForDecision2();
-  testMethod();
-  //  for(int j = 2; j < 11; j = j+2){
-  //    testSensorts(j);
-  //  }
+  // testSensorts();
+  brainlessDrive();
+}
+
+void brainlessDrive()
+{
+  if (!trigToMakeManeuver)
+  {
+    if (readSensorDistance(trigFront) > distanceTrigA)
+    {
+
+      goForward();
+    }
+    else if (readSensorDistance(trigFrontRight) > distanceTrigA && readSensorDistance(trigFront) > distanceTrigB)
+    {
+
+      goRightFw();
+    }
+    else if (readSensorDistance(trigFrontLeft) > distanceTrigA && readSensorDistance(trigFront) > distanceTrigB)
+    {
+
+      goLeftFw();
+    }
+    else if (readSensorDistance(trigRight) > distanceTrigA || readSensorDistance(trigFrontLeft) > distanceTrigA)
+    {
+
+      trigToMakeManeuver = true;
+    }
+    else
+    {
+      goNone();
+    }
+  }
+  else
+  { //Second part of algorythm
+
+    if (readSensorDistance(trigRight) > distanceTrigB && readSensorDistance(trigFront) < distanceTrigC && readSensorDistance(trigFrontRight) < distanceTrigC)
+    {
+      goRightBw();
+    }
+    else if (readSensorDistance(trigLeft) > distanceTrigB && readSensorDistance(trigFront) < distanceTrigC && readSensorDistance(trigFrontRight) < distanceTrigC)
+    {
+      goLeftBw();
+    }
+    else
+    {
+      trigToMakeManeuver = false;
+    }
+  }
 }
 
 //Test method was created only for testing purpose
-void testMethod() {
+void testMethod()
+{
 
-  if(readSensorDistance(trigFront)>20){
+  if (readSensorDistance(trigFront) > 20)
+  {
     goForward();
-  } else {
+  }
+  else
+  {
     goNone();
   }
-//goForward();
-  
+  //goForward();
 }
 
-/*/////////////////////////////////////////*/ /*Read sensor*/
+/*/////////////////////////////////////////*/ /*Read sensors distance*/
 long readSensorDistance(int mTriger)
 {
   int tempEcho;
@@ -120,6 +162,178 @@ long readSensorDistance(int mTriger)
   return distance;
 }
 
+/*/////////////////////////////////////////*/ /*Set on/of for pin to move RC*/
+void setOnRelayForBw()
+{
+  analogWrite(pin_out_bw, 255);
+}
+void setOffRelayForBw()
+{
+  analogWrite(pin_out_bw, 0);
+}
+void setOnRelayForFw()
+{
+  analogWrite(pin_out_fw, 255);
+}
+void setOffRelayForFw()
+{
+  analogWrite(pin_out_fw, 0);
+}
+void setOnRelayForLf()
+{
+  analogWrite(pin_out_lf, 255);
+}
+void setOffRelayForLF()
+{
+  analogWrite(pin_out_lf, 0);
+}
+void setOnRelayForRg()
+{
+  analogWrite(pin_out_rg, 255);
+}
+void setOffRelayForRg()
+{
+  analogWrite(pin_out_rg, 0);
+}
+void setOnMainLed()
+{
+  digitalWrite(LED_BUILTIN, HIGH);
+}
+void setOffMainLed()
+{
+  digitalWrite(LED_BUILTIN, LOW);
+}
+void resetOutput()
+{
+  analogWrite(pin_out_fw, 0);
+  analogWrite(pin_out_bw, 0);
+  analogWrite(pin_out_lf, 0);
+  analogWrite(pin_out_rg, 0);
+}
+void mainInitAndDelay()
+{
+  for (int i = 1; i <= 10; i++)
+  {
+    Serial.println(10 - i);
+    setOnMainLed();
+    delay((nDelay / i) / 4);
+    setOffMainLed();
+    delay((nDelay / i) / 4);
+  }
+}
+void msgForMovement(const String &msg)
+{
+  Serial.print("Movement Act: ");
+  Serial.println(msg);
+}
+
+/*/////////////////////////////////////////*/ /*Moving commands of RC*/
+void goForward()
+{
+  resetOutput(); //38
+  setOnRelayForFw();
+  msgForMovement("Forward");
+}
+void goBackward()
+{
+  resetOutput();
+  setOnRelayForBw();
+  msgForMovement("Backward");
+}
+
+void goLeftFw()
+{
+  resetOutput();
+  setOnRelayForFw();
+  setOnRelayForLf();
+  msgForMovement("Left Forward");
+}
+void goLeftBw()
+{
+  resetOutput();
+  setOnRelayForBw();
+  setOnRelayForLf();
+  msgForMovement("Left Backward");
+}
+void goRightFw()
+{
+  resetOutput();
+  setOnRelayForFw();
+  setOnRelayForRg();
+  msgForMovement("Right Forward");
+}
+void goRightBw()
+{
+  resetOutput();
+  setOnRelayForBw();
+  setOnRelayForRg();
+  msgForMovement("Rigth Backward");
+}
+void goNone()
+{
+  resetOutput();
+
+  setOnMainLed();
+  setOffMainLed();
+  msgForMovement("No movement");
+}
+
+/*/////////////////////////////////////////*/ /*For Testing mobility of car*/
+void mainfunctionOfRC()
+{
+  Serial.println("Reset out Put");
+  resetOutput();
+
+  Serial.println("Forward");
+  goForward();
+  delay(nDelay);
+
+  Serial.println("None");
+  goNone();
+  delay(nDelay);
+
+  Serial.println("Backward");
+  goBackward();
+  delay(nDelay);
+
+  Serial.println("None");
+  goNone();
+  delay(nDelay);
+
+  Serial.println("Left Forward");
+  goLeftFw();
+  delay(nDelay);
+
+  Serial.println("None");
+  goNone();
+  delay(nDelay);
+
+  Serial.println("Left Backward");
+  goLeftBw();
+  delay(nDelay);
+
+  Serial.println("None");
+  goNone();
+  delay(nDelay);
+
+  Serial.println("Right Forward");
+  goRightFw();
+  delay(nDelay);
+
+  Serial.println("None");
+  goNone();
+  delay(nDelay);
+
+  Serial.println("Righ Backward");
+  goRightBw();
+  delay(nDelay);
+
+  Serial.println("None");
+  goNone();
+  delay(nDelay);
+}
+
+/*/////////////////////////////////////////*/ /*For Testing sensors of car*/
 void testSensorts(int mTriger)
 {
   int tempEcho;
@@ -158,275 +372,4 @@ void testSensorts(int mTriger)
   Serial.print("Triger: ");
   Serial.println(mTriger);
   Serial.println("__________");
-}
-
-//Main Algorthm of project
-void algthmForDecision()
-{
-
-  if (lastMoveWasBack || readSensorDistance(trigFront) < distanceForFrontTrig) //last move was Backward? AND
-  {
-    if (readSensorDistance(trigFrontLeft) > distanceForRightLeftTrig || readSensorDistance(trigFrontRight) > distanceForRightLeftTrig) // Is FL or FR > 30cm (distanceForRightLeftTrig)
-    {
-      if (readSensorDistance(trigFrontLeft) > readSensorDistance(trigFrontRight))
-      {
-        if (readSensorDistance(trigLeft) > distanceForRightLeftTrig)
-        {
-          goLeftFw();
-          lastMoveWasBack = false;
-        }
-        else
-        {
-          goBackward();
-          lastMoveWasBack = true;
-        }
-      }
-      else
-      {
-        if (readSensorDistance(trigRight) > distanceForRightLeftTrig)
-        {
-          goRightFw();
-          lastMoveWasBack = false;
-        }
-        else
-        {
-          goBackward();
-          lastMoveWasBack = true;
-        }
-      }
-    }
-    else
-    {
-      goBackward();
-      lastMoveWasBack = true;
-    }
-  }
-  else
-  {
-    goForward();
-  }
-}
-
-void algorithmForDecision2()
-{
-  while (readSensorDistance(trigFront) > distanceForFrontTrig && readSensorDistance(trigFrontLeft) > distanceForRightLeftTrig && readSensorDistance(trigFrontRight) > distanceForRightLeftTrig)
-  {
-    goForward();
-    Serial.println("&&0   !!!!");
-  }
-
-  if (readSensorDistance(trigFront) < distanceForFrontTrig)
-  {
-    do
-    {
-      if (readSensorDistance(trigFrontLeft) < readSensorDistance(trigFrontRight))
-      {
-        goRightFw();
-      }
-      else
-      {
-        goLeftFw();
-      }
-      Serial.print("&&1   ");
-      Serial.println(readSensorDistance(trigFrontLeft) < readSensorDistance(trigFrontRight));
-    } while (readSensorDistance(trigFront) < distanceForFrontTrigSafeCall);
-  }
-  else if (readSensorDistance(trigFrontLeft) < distanceForRightLeftTrig)
-  {
-    if (readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall)
-    {
-      do
-      {
-        goRightFw();
-        Serial.print("&&2   ");
-        Serial.println(readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall);
-      } while (readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigSafeCall);
-    }
-    else
-    {
-      do
-      {
-        goLeftBw();
-        Serial.print("&&3   ");
-        Serial.println(readSensorDistance(trigFrontRight) > distanceForRightLeftTrigCloseCall);
-      } while (readSensorDistance(trigFront) < distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) < distanceForRightLeftTrigCloseCall);
-    }
-  }
-  else
-  {
-    if (readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall)
-    {
-      do
-      {
-        goLeftFw();
-        Serial.print("&&4   ");
-        Serial.println(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall);
-      } while (readSensorDistance(trigFrontRight) < distanceForRightLeftTrigSafeCall);
-    }
-    else
-    {
-      do
-      {
-        goRightBw();
-        Serial.print("&&5   ");
-        Serial.println(readSensorDistance(trigFrontLeft) > distanceForRightLeftTrigCloseCall);
-      } while (readSensorDistance(trigFront) < distanceForFrontTrigCloseCall && readSensorDistance(trigFrontLeft) < distanceForRightLeftTrigCloseCall && readSensorDistance(trigFrontRight) < distanceForRightLeftTrigCloseCall);
-    }
-  }
-}
-
-/*/////////////////////////////////////////*/ /*Set on/of for pin to move RC*/
-void setOnRelayForBw()
-{
-  analogWrite(pin_out_bw, 255);
-}
-void setOffRelayForBw()
-{
-  analogWrite(pin_out_bw, 0);
-}
-void setOnRelayForFw()
-{
-  analogWrite(pin_out_fw, 255);
-}
-void setOffRelayForFw()
-{
-  analogWrite(pin_out_fw, 0);
-}
-void setOnRelayForLf()
-{
-  analogWrite(pin_out_lf, 255);
-}
-void setOffRelayForLF()
-{
-  analogWrite(pin_out_lf, 0);
-}
-void setOnRelayForRg()
-{
-  analogWrite(pin_out_rg, 255);
-}
-
-void setOffRelayForRg()
-{
-  analogWrite(pin_out_rg, 0);
-}
-
-void setOnMainLed()
-{
-  digitalWrite(LED_BUILTIN, HIGH);
-}
-void setOffMainLed()
-{
-  digitalWrite(LED_BUILTIN, LOW);
-}
-void resetOutput()
-{
-  analogWrite(pin_out_fw, 0);
-  analogWrite(pin_out_bw, 0);
-  analogWrite(pin_out_lf, 0);
-  analogWrite(pin_out_rg, 0);
-}
-void mainInitAndDelay()
-{
-  for (int i = 1; i <= 10; i++)
-  {
-    Serial.println(10 - i);
-    setOnMainLed();
-    delay((nDelay / i) / 4);
-    setOffMainLed();
-    delay((nDelay / i) / 4);
-  }
-}
-void msgForMovement(const String &msg)
-{
-  Serial.print("Movement Act: ");
-  Serial.println(msg);
-  Serial.println("__________");
-}
-/*/////////////////////////////////////////*/ /*Moving of RC*/
-void goForward()
-{
-  resetOutput(); //38
-  setOnRelayForFw();
-//  delay(nDelay);
-  msgForMovement("Forward");
-}
-void goBackward()
-{
-  resetOutput();
-  setOnRelayForBw();
-//  delay(nDelay);
-  msgForMovement("Backward");
-}
-
-void goLeftFw()
-{
-  resetOutput();
-  setOnRelayForFw();
-  setOnRelayForLf();
-//  delay(nDelay);
-  msgForMovement("Left Forward");
-}
-void goLeftBw()
-{
-  resetOutput();
-  setOnRelayForBw();
-  setOnRelayForLf();
-//  delay(nDelay);
-  msgForMovement("Left Backward");
-}
-void goRightFw()
-{
-  resetOutput();
-  setOnRelayForFw();
-  setOnRelayForRg();
-//  delay(nDelay);
-  msgForMovement("Right Forward");
-}
-void goRightBw()
-{
-  resetOutput();
-  setOnRelayForBw();
-  setOnRelayForRg();
-//  delay(nDelay);
-  msgForMovement("Rigth Backward");
-}
-void goNone()
-{
-  resetOutput();
-
-  setOnMainLed();
-//  delay(nDelay);
-  setOffMainLed();
-  msgForMovement("No movement");
-}
-
-/*/////////////////////////////////////////*/ /*For Testing mobility of car*/
-void mainfunctionOfRC()
-{
-  Serial.println("Reset out Put");
-  resetOutput();
-  Serial.println("Forward");
-  goForward();
-  Serial.println("None");
-  goNone();
-  Serial.println("Backward");
-  goBackward();
-  Serial.println("None");
-  goNone();
-  Serial.println("Left Forward");
-  goLeftFw();
-  Serial.println("None");
-  goNone();
-  Serial.println("Left Backward");
-  goLeftBw();
-  Serial.println("None");
-  goNone();
-  Serial.println("Right Forward");
-  goRightFw();
-  Serial.println("None");
-  goNone();
-  Serial.println("Righ Backward");
-  goRightBw();
-  Serial.println("None");
-  goNone();
 }
