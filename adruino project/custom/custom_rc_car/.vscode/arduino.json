@@ -1,6 +1,6 @@
 {
     "board": "arduino:avr:mega",
     "configuration": "cpu=atmega2560",
-    "port": "COM4",
+    "port": "/dev/cu.usbserial-140",
     "sketch": "custom_rc_car.ino"
 }

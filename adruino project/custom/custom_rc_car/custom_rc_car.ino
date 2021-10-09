@@ -20,9 +20,10 @@ const int delToNeutralSensor = 2;      //microsec - To reset the signal from sen
 const int delToWaitRespondSensor = 10; //microsec
 int distance;
 bool trigToMakeManeuver;      //Triger for brainlessDrive to excecute the second part of algorythm
-const int distanceTrigC = 50; //50 cm
-const int distanceTrigA = 30; //30 cm
-const int distanceTrigB = 15; //15 cm
+const int distanceTrigC = 100; //100 cm
+const int distanceTrigA = 60; //60 cm
+const int distanceTrigD = 40; //40 cm
+const int distanceTrigB = 30; //30 cm
 
 long duration;
 
@@ -64,27 +65,25 @@ void brainlessDrive()
   {
     if (readSensorDistance(trigFront) > distanceTrigA)
     {
-
       goForward();
     }
     else if (readSensorDistance(trigFrontRight) > distanceTrigA && readSensorDistance(trigFront) > distanceTrigB)
     {
-
       goRightFw();
     }
     else if (readSensorDistance(trigFrontLeft) > distanceTrigA && readSensorDistance(trigFront) > distanceTrigB)
     {
-
       goLeftFw();
     }
-    else if (readSensorDistance(trigRight) > distanceTrigA || readSensorDistance(trigFrontLeft) > distanceTrigA)
+    else if (readSensorDistance(trigRight) > distanceTrigD || readSensorDistance(trigLeft) > distanceTrigD)
     {
-
       trigToMakeManeuver = true;
     }
     else
     {
-      goNone();
+      trigToMakeManeuver = true;
+      goBackward();
+      // goNone();
     }
   }
   else
